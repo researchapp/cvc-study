@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CVC Study – Data Collection</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f4f3ef;--surface:#fff;--border:#d0cfc8;--focus:#1a3a5c;
+  --text:#1a1a1a;--muted:#6b6b6b;--accent:#1a3a5c;--accent-light:#e8eef5;
+  --draft-bg:#f5f0e8;--draft-border:#c8a020;--draft-text:#7a5c00;
+  --success:#1a5c3a;--success-bg:#e8f5ee;
+  --warn:#7a3a00;--warn-bg:#fff3e0;--warn-border:#e08030;
+  --error:#8b1a1a;--r:6px;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:80px}
+
+.site-header{background:var(--accent);color:white;padding:18px 22px 14px;position:sticky;top:0;z-index:200;box-shadow:0 2px 14px rgba(0,0,0,.2)}
+.header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.header-title h1{font-size:10px;font-family:var(--mono);font-weight:500;letter-spacing:.1em;text-transform:uppercase;opacity:.6;margin-bottom:4px}
+.header-title p{font-size:13px;font-weight:300;opacity:.88;max-width:560px;line-height:1.4}
+.header-actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap}
+.btn-tab{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:white;padding:6px 12px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.04em;cursor:pointer;transition:background .15s;white-space:nowrap}
+.btn-tab:hover{background:rgba(255,255,255,.22)}.btn-tab.active{background:rgba(255,255,255,.28);border-color:rgba(255,255,255,.5)}
+.progress-bar{height:3px;background:rgba(255,255,255,.12);margin-top:11px}
+.progress-fill{height:100%;background:#7eb8f7;width:0%;transition:width .4s ease}
+
+.panel{display:none}.panel.active{display:block}
+
+/* PIN */
+.pin-wrap{min-height:80vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.pin-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:36px 32px;max-width:380px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.pin-card .icon{font-size:36px;margin-bottom:14px}
+.pin-card h2{font-size:18px;font-weight:600;color:var(--accent);margin-bottom:6px}
+.pin-card .sub{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.5}
+.pin-label{font-size:11px;font-family:var(--mono);color:var(--muted);text-align:left;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.pin-url{width:100%;padding:8px 11px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:13px;color:var(--text);background:var(--bg);outline:none;margin-bottom:12px}
+.pin-url:focus{border-color:var(--focus)}
+.pin-input{width:100%;padding:12px;border:2px solid var(--border);border-radius:var(--r);font-family:var(--mono);font-size:22px;font-weight:600;letter-spacing:.3em;text-align:center;color:var(--accent);background:var(--bg);outline:none;margin-bottom:12px}
+.pin-input:focus{border-color:var(--focus);background:white}
+.btn-pin{width:100%;background:var(--accent);color:white;border:none;padding:12px;border-radius:var(--r);font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-pin:hover{background:#0f2440}.btn-pin:disabled{background:#aaa;cursor:not-allowed}
+.pin-error{color:var(--error);font-size:13px;margin-top:10px;min-height:20px;font-family:var(--mono);line-height:1.4}
+.pin-hint{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.5;text-align:left;background:var(--bg);border-radius:var(--r);padding:10px 12px}
+
+/* CASES */
+.cases-container{max-width:760px;margin:0 auto;padding:24px 16px}
+.cases-toolbar{display:flex;gap:8px;margin-bottom:16px;align-items:center}
+.search-box{flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:14px;background:var(--surface);outline:none}
+.search-box:focus{border-color:var(--focus)}
+.btn-new{background:var(--accent);color:white;border:none;padding:9px 16px;border-radius:var(--r);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s}
+.btn-new:hover{background:#0f2440}
+.btn-refresh{background:var(--surface);color:var(--muted);border:1px solid var(--border);padding:9px 12px;border-radius:var(--r);font-size:14px;cursor:pointer;transition:all .15s}
+.btn-refresh:hover{border-color:var(--accent);color:var(--accent)}
+.cases-list{display:flex;flex-direction:column;gap:8px}
+.case-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:13px 16px;cursor:pointer;transition:all .15s;display:grid;grid-template-columns:auto 1fr auto auto auto;align-items:center;gap:12px}
+.case-card:hover{border-color:var(--accent);box-shadow:0 2px 10px rgba(26,58,92,.1);transform:translateY(-1px)}
+.case-id{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--accent)}
+.case-meta{font-size:13px;color:var(--muted);line-height:1.3}
+.case-meta strong{color:var(--text)}
+.case-flags{display:flex;flex-direction:column;gap:3px;align-items:flex-end}
+.chip{font-family:var(--mono);font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.chip.draft{background:var(--draft-bg);color:var(--draft-text);border:1px solid var(--draft-border)}
+.chip.submitted{background:var(--success-bg);color:var(--success);border:1px solid #a0c8b0}
+.chip.incomplete{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-border)}
+.case-date{font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap}
+.btn-del{background:none;border:none;color:#ccc;cursor:pointer;font-size:17px;padding:2px 4px;transition:color .15s;flex-shrink:0;line-height:1}
+.btn-del:hover{color:var(--error)}
+.empty-state{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty-state .icon{font-size:32px;margin-bottom:10px}
+.empty-state p{font-size:14px;line-height:1.6}
+.loading-state{text-align:center;padding:40px;color:var(--muted);font-family:var(--mono);font-size:13px}
+
+/* FORM */
+.form-container{max-width:760px;margin:0 auto;padding:20px 16px}
+.form-banner{background:var(--draft-bg);border:1px solid var(--draft-border);border-radius:var(--r);padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.banner-id{font-family:var(--mono);font-size:13px;color:var(--draft-text);font-weight:600}
+.banner-saved{font-size:11px;color:var(--draft-text);opacity:.75}
+.btn-save-banner{background:var(--draft-text);color:white;border:none;padding:6px 12px;border-radius:var(--r);font-family:var(--mono);font-size:11px;font-weight:500;cursor:pointer;transition:background .15s}
+.btn-save-banner:hover{background:#5a4400}.btn-save-banner:disabled{background:#aaa;cursor:not-allowed}
+
+.section-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:12px;overflow:hidden;transition:box-shadow .2s}
+.section-card:focus-within{box-shadow:0 3px 16px rgba(26,58,92,.1)}
+.section-header{padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.section-badge{width:24px;height:24px;border-radius:50%;background:var(--accent);color:white;font-family:var(--mono);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);flex:1}
+.section-chevron{font-size:12px;color:var(--muted);transition:transform .25s}
+.section-card.collapsed .section-chevron{transform:rotate(-90deg)}
+.section-body{padding:16px;display:grid;gap:14px}
+.section-card.collapsed .section-body{display:none}
+
+.field-group{display:flex;flex-direction:column;gap:4px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+label.fl{font-size:11px;font-weight:500;color:var(--muted);font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase}
+label.fl .req{color:#c0392b;margin-left:2px}
+label.fl .note{font-weight:400;opacity:.65;text-transform:none}
+
+input[type=text],input[type=number],input[type=date],input[type=datetime-local],textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--sans);font-size:14px;color:var(--text);background:var(--bg);transition:border-color .15s,box-shadow .15s;outline:none}
+input:focus,textarea:focus{border-color:var(--focus);box-shadow:0 0 0 3px rgba(26,58,92,.08);background:white}
+textarea{min-height:64px;resize:vertical}
+
+.radio-group,.check-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.ro,.co{display:flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;cursor:pointer;font-size:13px;transition:all .15s;user-select:none}
+.ro:hover,.co:hover{border-color:var(--accent);background:var(--accent-light)}
+.ro input,.co input{accent-color:var(--accent)}
+.ro:has(input:checked),.co:has(input:checked){border-color:var(--accent);background:var(--accent-light);color:var(--accent);font-weight:500}
+
+.subsection{border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;background:var(--bg)}
+.subsection-title{font-size:10px;font-family:var(--mono);font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:10px}
+
+.conditional{display:none;margin-top:7px}.conditional.visible{display:block}
+
+.submit-area{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:12px}
+.btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn-submit{background:var(--success);color:white;border:none;padding:10px 26px;border-radius:var(--r);font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;transition:background .15s,transform .1s}
+.btn-submit:hover{background:#0f3a22}.btn-submit:active{transform:scale(.98)}.btn-submit:disabled{background:#aaa;cursor:not-allowed}
+.btn-draft{background:var(--draft-text);color:white;border:none;padding:10px 20px;border-radius:var(--r);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-draft:hover{background:#5a4400}.btn-draft:disabled{background:#aaa;cursor:not-allowed}
+.btn-back{background:transparent;color:var(--muted);border:1px solid var(--border);padding:8px 14px;border-radius:var(--r);font-family:var(--sans);font-size:13px;cursor:pointer;transition:all .15s}
+.btn-back:hover{border-color:#c0392b;color:#c0392b}
+#statusMsg{font-size:11px;color:var(--muted);font-family:var(--mono)}
+
+.toast{position:fixed;bottom:20px;right:20px;padding:10px 16px;border-radius:var(--r);font-size:13px;font-weight:500;z-index:9999;opacity:0;transform:translateY(8px);transition:all .3s;max-width:320px;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:var(--success);color:white}
+.toast.error{background:var(--error);color:white}
+.toast.info{background:var(--accent);color:white}
+.toast.warn{background:var(--warn);color:white}
+
+@media(max-width:580px){
+  .field-row,.field-row-3{grid-template-columns:1fr}
+  .site-header{padding:12px 14px}
+  .form-container,.cases-container{padding:12px 10px}
+  .case-card{grid-template-columns:1fr auto;grid-template-rows:auto auto}
+  .case-flags{flex-direction:row}
+}
+</style>
+</head>
+<body>
+
+<div class="site-header">
+  <div class="header-top">
+    <div class="header-title">
+      <h1>Diagnostic Accuracy Study · CVC Malposition</h1>
+      <p>Agitated-saline Ultrasound vs Chest X-ray — Prospective Paired Study</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-tab active" id="tab-cases" onclick="showPanel('cases')">📋 All Cases</button>
+      <button class="btn-tab" id="tab-form" onclick="showPanel('form')" style="display:none">✏️ Edit Case</button>
+      <button class="btn-tab" id="tab-logout" onclick="doLogout()" style="display:none">🔒 Lock</button>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<!-- PIN -->
+<div class="panel active" id="panel-pin">
+  <div class="pin-wrap">
+    <div class="pin-card">
+      <div class="icon">🔐</div>
+      <h2>Team Access</h2>
+      <p class="sub">Enter your Apps Script URL and team PIN to access the study database.</p>
+      <label class="pin-label">Apps Script Web App URL</label>
+      <input class="pin-url" type="text" id="urlInput" placeholder="https://script.google.com/macros/s/…/exec">
+      <label class="pin-label" style="margin-top:4px">Team PIN</label>
+      <input class="pin-input" type="password" id="pinInput" maxlength="6" placeholder="••••" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="btn-pin" id="btnLogin" onclick="doLogin()">Access Study Data →</button>
+      <div class="pin-error" id="pinError"></div>
+      <div class="pin-hint">
+        <strong>First time?</strong> Paste the Web App URL from Apps Script → Deploy → Manage deployments.<br><br>
+        <strong>Access:</strong> Who has access must be set to <strong>"Anyone"</strong> in your deployment settings.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CASES -->
+<div class="panel" id="panel-cases">
+  <div class="cases-container">
+    <div class="cases-toolbar">
+      <input class="search-box" type="text" id="caseSearch" placeholder="Search by ID, name, ward…" oninput="filterCases()">
+      <button class="btn-refresh" onclick="loadCaseList()" title="Refresh from Sheets">↻</button>
+      <button class="btn-new" onclick="newCase()">+ New Case</button>
+    </div>
+    <div class="cases-list" id="casesList"><div class="loading-state">Loading cases…</div></div>
+  </div>
+</div>
+
+<!-- FORM -->
+<div class="panel" id="panel-form">
+  <div class="form-container">
+    <div class="form-banner">
+      <div>
+        <div class="banner-id" id="bannerCaseId">—</div>
+        <div class="banner-saved" id="bannerSavedTime">Not yet saved</div>
+      </div>
+      <button class="btn-save-banner" id="btnSaveBanner" onclick="saveDraft()">💾 Save Draft to Sheets</button>
+    </div>
+
+    <form id="studyForm" novalidate>
+
+      <!-- META -->
+      <div class="section-card" id="sec-meta">
+        <div class="section-header" onclick="toggleSection('sec-meta')">
+          <div class="section-badge">◈</div><div class="section-title">Study Identifiers</div><div class="section-chevron">▾</div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div class="field-group"><label class="fl">Participant ID <span class="req">*</span></label><input type="text" name="participant_id" placeholder="e.g. CVC-001" required></div>
+            <div class="field-group"><label class="fl">Date of Enrollment <span class="req">*</span></label><input type="date" name="enrollment_date" required></div>
+          </div>
+          <div class="field-group">
+            <label class="fl">Ward / Unit <span class="req">*</span></label>
+            <div class="radio-group">
+              <label class="ro"><input type="radio" name="ward_unit" value="ICU" required> ICU</label>
+              <label class="ro"><input type="radio" name="ward_unit" value="OT"> OT</label>
+              <label class="ro"><input type="radio" name="ward_unit" value="Ward"> Ward</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- A -->
+      <div class="section-card" id="sec-a">
+        <div class="section-header" onclick="toggleSection('sec-a')">
+          <div class="section-badge" style="background:#1a4a5c">A</div><div class="section-title">Patient Demographics</div><div class="section-chevron">▾</div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div class="field-group"><label class="fl">Name / Initials</label><input type="text" name="name_initials" placeholder="e.g. R.K.S."></div>
+            <div class="field-group"><label class="fl">Hospital ID</label><input type="text" name="hospital_id" placeholder="Hospital ID"></div>
+          </div>
+          <div class="field-row-3">
+            <div class="field-group"><label class="fl">Age (years) <span class="req">*</span></label><input type="number" name="age" min="0" max="120" placeholder="Years" required></div>
+            <div class="field-group"><label class="fl">Height (cm)</label><input type="number" name="height_cm" min="50" max="250" placeholder="cm"></div>
+            <div class="field-group"><label class="fl">Weight (kg)</label><input type="number" name="weight_kg" min="1" max="300" placeholder="kg"></div>
+          </div>
+          <div class="field-group">
+            <label class="fl">Sex <span class="req">*</span></label>
+            <div class="radio-group">
+              <label class="ro"><input type="radio" name="sex" value="Male" required> Male</label>
+              <label class="ro"><input type="radio" name="sex" value="Female"> Female</label>
+              <label class="ro"><input type="radio" name="sex" value="Other"> Other</label>
+            </div>
+          </div>
+          <div class="field-group"><label class="fl">Relevant Comorbidities</label><textarea name="comorbidities" placeholder="List relevant comorbidities…"></textarea></div>
+        </div>
+      </div>
+
+      <!-- B -->
+      <div class="section-card" id="sec-b">
+        <div class="section-header" onclick="toggleSection('sec-b')">
+          <div class="section-badge" style="background:#1a5c3a">B</div><div class="section-title">Procedure Details</div><div class="section-chevron">▾</div>
+        </div>
+        <div class="section-body">
+          <div class="field-group">
+            <label class="fl">Indication for CVC <span class="req">*</span> <span class="note">(select all that apply)</span></label>
+            <div class="check-group">
+              <label class="co"><input type="checkbox" name="ind_hemodynamic" value="Hemodynamic monitoring"> Hemodynamic monitoring</label>
+              <label class="co"><input type="checkbox" name="ind_drug" value="Drug infusion"> Drug infusion</label>
+              <label class="co"><input type="checkbox" name="ind_dialysis" value="Dialysis"> Dialysis</label>
+              <label class="co"><input type="checkbox" name="ind_tpn" value="TPN"> TPN</label>
+              <label class="co"><input type="checkbox" name="ind_other" value="Other" id="cvc_ind_other_cb"> Other</label>
+            </div>
+            <input type="text" name="ind_other_text" placeholder="Other indication — specify…" class="conditional" id="cvc_ind_other_field">
+          </div>
+          <div class="field-group">
+            <label class="fl">Insertion Site <span class="req">*</span></label>
+            <div class="radio-group">
+              <label class="ro"><input type="radio" name="insertion_site" value="Right IJV" required> Right IJV</label>
+              <label class="ro"><input type="radio" name="insertion_site" value="Left IJV"> Left IJV</label>
+              <label class="ro"><input type="radio" name="insertion_site" value="Right subclavian"> Right subclavian</label>
+              <label class="ro"><input type="radio" name="insertion_site" value="Left subclavian"> Left subclavian</label>
+              <label class="ro"><input type="radio" name="insertion_site" value="Femoral"> Femoral</label>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="fl">Operator Level <span class="req">*</span></label>
+              <div class="radio-group">
+                <label class="ro"><input type="radio" name="operator_level" value="Consultant" required> Consultant</label>
+                <label class="ro"><input type="radio" name="operator_level" value="Fellow"> Fellow</label>
+                <label class="ro"><input type="radio" name="operator_level" value="Resident"> Resident</label>
+              </div>
+              <input type="text" name="resident_pgy" placeholder="PGY level (e.g. PGY-2)" class="conditional" id="pgy_field">
+            </div>
+            <div class="field-group">
+              <label class="fl">Number of Attempts <span class="req">*</span></label>
+              <div class="radio-group">
+                <label class="ro"><input type="radio" name="num_attempts" value="1" required> 1</label>
+                <label class="ro"><input type="radio" name="num_attempts" value="2"> 2</label>
+                <label class="ro"><input type="radio" name="num_attempts" value=">2"> &gt;2</label>
+              </div>
+            </div>
+          </div>
+          <div class="field-group"><label class="fl">Challenges During Insertion</label><textarea name="insertion_challenges" placeholder="Describe any difficulties (difficult anatomy, wire issues, arterial puncture, bleeding, etc.)…"></textarea></div>
+          <div class="field-group"><label class="fl">Date & Time of Insertion</label><input type="datetime-local" name="insertion_datetime"></div>
+        </div>
+      </div>
+
+      <!-- C -->
+      <div class="section-card" id="sec-c">
+        <div class="section-header" onclick="toggleSection('sec-c')">
+          <div class="section-badge" style="background:#5c3a1a">C</div><div class="section-title">Index Test – Agitated-Saline Ultrasound</div><div class="section-chevron">▾</div>
+        </div>
+        <div class="section-body">
+          <div class="field-group">
+            <label class="fl">Adequate Imaging Window? <span class="req">*</span></label>
+            <div class="radio-group">
+              <label class="ro"><input type="radio" name="imaging_window" value="Yes" required> Yes</label>
+              <label class="ro"><input type="radio" name="imaging_window" value="No"> No</label>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="fl">Bubble Appearance in Right Atrium <span class="req">*</span></label>
+            <div class="radio-group">
+              <label class="ro"><input type="radio" name="bubble_appearance" value="Within 2 sec (correct)" required> Within 2 sec (correct)</label>
+              <label class="ro"><input type="radio" name="bubble_appearance" value="Delayed >2 sec"> Delayed / abnormal (&gt;2 sec)</label>
+              <label class="ro"><input type="radio" name="bubble_appearance" value="No bubbles (malposition)"> No bubbles (malposition)</label>
+            </div>
+          </div>
+          <div class="subsection">
+            <div class="subsection-title">Lung Ultrasound Findings</div>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="fl">Right Lung Sliding</label>
+                <div class="radio-group">
+                  <label class="ro"><input type="radio" name="lung_sliding_right" value="Present"> Present</label>
+                  <label class="ro"><input type="radio" name="lung_sliding_right" value="Absent"> Absent</label>
+                </div>
+              </div>
+              <div class="field-group">
+                <label class="fl">Left Lung Sliding</label>
+                <div class="radio-group">
+                  <label class="ro"><input type="radio" name="lung_sliding_left" value="Present"> Present</label>
+                  <label class="ro"><input type="radio" name="lung_sliding_left" value="Absent"> Absent</label>
+                </div>
+              </div>
+            </div>
+            <div class="field-group" style="margin-top:12px">
+              <label class="fl">Pleural Effusion / Hemothorax</label>
+              <div class="radio-group">
+                <label class="ro"><input type="radio" name="pleural_effusion_us" value="Yes"> Yes</label>
+                <label class="ro"><input type="radio" name="pleural_effusion_us" value="No"> No</label>
+              </div>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="fl">Overall US Interpretation <span class="req">*</span></label>
+            <div class="radio-group">
+              <label class="ro"><input type="radio" name="us_interpretation" value="Correct" required> Correct</label>
+              <label class="ro"><input type="radio" name="us_interpretation" value="Malposition"> Malposition</label>
+              <label class="ro"><input type="radio" name="us_interpretation" value="Indeterminate"> Indeterminate</label>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group"><label class="fl">Time to US Confirmation (min)</label><input type="number" name="us_time_minutes" min="0" placeholder="Minutes"></div>
+            <div class="field-group"><label class="fl">Ultrasound Operator</label><input type="text" name="us_operator" placeholder="Name or initials"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- D -->
+      <div class="section-card" id="sec-d">
+        <div class="section-header" onclick="toggleSection('sec-d')">
+          <div class="section-badge" style="background:#3a1a5c">D</div><div class="section-title">Reference Test – Chest X-ray</div><div class="section-chevron">▾</div>
+        </div>
+        <div class="section-body">
+          <div class="field-group"><label class="fl">Time of Chest X-ray</label><input type="datetime-local" name="cxr_datetime"></div>
+          <div class="field-group">
+            <label class="fl">CVC Tip Position (per Radiologist) <span class="req">*</span></label>
+            <div class="radio-group">
+              <label class="ro"><input type="radio" name="cxr_tip_position" value="Correct (SVC-RA junction / lower SVC)" required> Correct (SVC–RA junction / lower SVC)</label>
+              <label class="ro"><input type="radio" name="cxr_tip_position" value="Malposition"> Malposition</label>
+              <label class="ro"><input type="radio" name="cxr_tip_position" value="Indeterminate/poor quality"> Indeterminate / poor quality</label>
+            </div>
+            <input type="text" name="cxr_malposition_site" placeholder="Malposition site — specify…" class="conditional" id="cxr_mal_field">
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="fl">Pneumothorax</label>
+              <div class="radio-group">
+                <label class="ro"><input type="radio" name="pneumothorax" value="Yes"> Yes</label>
+                <label class="ro"><input type="radio" name="pneumothorax" value="No"> No</label>
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="fl">Hemothorax</label>
+              <div class="radio-group">
+                <label class="ro"><input type="radio" name="hemothorax" value="Yes"> Yes</label>
+                <label class="ro"><input type="radio" name="hemothorax" value="No"> No</label>
+              </div>
+            </div>
+          </div>
+          <div class="field-group"><label class="fl">Radiologist Initials</label><input type="text" name="radiologist_initials" placeholder="Initials"></div>
+        </div>
+      </div>
+
+      <!-- E -->
+      <div class="section-card" id="sec-e">
+        <div class="section-header" onclick="toggleSection('sec-e')">
+          <div class="section-badge" style="background:#5c1a3a">E</div><div class="section-title">Adjudication (if Required)</div><div class="section-chevron">▾</div>
+        </div>
+        <div class="section-body">
+          <div class="field-group">
+            <label class="fl">Discordant Case Referred?</label>
+            <div class="radio-group">
+              <label class="ro"><input type="radio" name="discordant_referred" value="Yes"> Yes</label>
+              <label class="ro"><input type="radio" name="discordant_referred" value="No"> No</label>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="fl">Adjudication Decision</label>
+            <div class="radio-group">
+              <label class="ro"><input type="radio" name="adjudication_decision" value="Correct"> Correct</label>
+              <label class="ro"><input type="radio" name="adjudication_decision" value="Malposition"> Malposition</label>
+              <label class="ro"><input type="radio" name="adjudication_decision" value="Indeterminate"> Indeterminate</label>
+              <label class="ro"><input type="radio" name="adjudication_decision" value="N/A"> N/A</label>
+            </div>
+          </div>
+          <div class="field-group"><label class="fl">Adjudication Comments</label><textarea name="adjudication_comments" placeholder="Any comments…"></textarea></div>
+        </div>
+      </div>
+
+      <!-- F -->
+      <div class="section-card" id="sec-f">
+        <div class="section-header" onclick="toggleSection('sec-f')">
+          <div class="section-badge" style="background:#1a4a5c">F</div><div class="section-title">Outcomes within 24 Hours</div><div class="section-chevron">▾</div>
+        </div>
+        <div class="section-body">
+          <div class="field-group">
+            <label class="fl">Clinical Intervention Required</label>
+            <div class="radio-group">
+              <label class="ro"><input type="radio" name="clinical_intervention" value="Catheter repositioned"> Catheter repositioned</label>
+              <label class="ro"><input type="radio" name="clinical_intervention" value="Catheter removed and reinserted"> Removed & reinserted</label>
+              <label class="ro"><input type="radio" name="clinical_intervention" value="Chest tube inserted"> Chest tube inserted</label>
+              <label class="ro"><input type="radio" name="clinical_intervention" value="None"> None</label>
+            </div>
+          </div>
+          <div class="field-group"><label class="fl">Complications (if any)</label><textarea name="complications" placeholder="Describe any complications…"></textarea></div>
+        </div>
+      </div>
+
+      <!-- G -->
+      <div class="section-card" id="sec-g">
+        <div class="section-header" onclick="toggleSection('sec-g')">
+          <div class="section-badge" style="background:#3a4a1a">G</div><div class="section-title">Data Quality</div><div class="section-chevron">▾</div>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div class="field-group"><label class="fl">Form Completed By <span class="req">*</span></label><input type="text" name="form_completed_by" placeholder="Name or initials" required></div>
+            <div class="field-group"><label class="fl">Date Completed</label><input type="date" name="form_completed_date"></div>
+          </div>
+          <div class="field-row">
+            <div class="field-group"><label class="fl">Checked By (RA/PI)</label><input type="text" name="checked_by" placeholder="Name or initials"></div>
+            <div class="field-group"><label class="fl">Date Checked</label><input type="date" name="checked_date"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="submit-area">
+        <div class="btn-row">
+          <button type="submit" class="btn-submit" id="submitBtn">✓ Mark as Final & Submit</button>
+          <button type="button" class="btn-draft" id="draftBtn" onclick="saveDraft()">💾 Save Draft</button>
+          <button type="button" class="btn-back" onclick="goBack()">← Back to List</button>
+        </div>
+        <div id="statusMsg"></div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+let SESSION_PIN = '';
+let API_URL = '';
+let currentCaseId = null;
+let allCases = [];
+
+// ══════════════════════════════════════════════════
+// CORE API — uses GET + base64 payload to avoid CORS
+// ══════════════════════════════════════════════════
+async function api(action, extra = {}) {
+  const payload = { action, pin: SESSION_PIN, ...extra };
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  const url = `${API_URL}?payload=${encodeURIComponent(encoded)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+(function init() {
+  const savedUrl = localStorage.getItem('cvc_api_url') || '';
+  const savedPin = sessionStorage.getItem('cvc_pin') || '';
+  if (savedUrl) document.getElementById('urlInput').value = savedUrl;
+  if (savedUrl && savedPin) {
+    API_URL = savedUrl;
+    SESSION_PIN = savedPin;
+    unlockUI();
+    loadCaseList();
+  }
+})();
+
+// ══════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════
+async function doLogin() {
+  const url = document.getElementById('urlInput').value.trim();
+  const pin = document.getElementById('pinInput').value.trim();
+  const errEl = document.getElementById('pinError');
+  const btn = document.getElementById('btnLogin');
+  errEl.textContent = '';
+
+  if (!url) { errEl.textContent = 'Please enter the Apps Script URL.'; return; }
+  if (!pin)  { errEl.textContent = 'Please enter your PIN.'; return; }
+  if (!url.includes('script.google.com')) {
+    errEl.textContent = 'URL should start with https://script.google.com/…';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Verifying…';
+  errEl.textContent = '';
+
+  try {
+    API_URL = url;
+    SESSION_PIN = pin;
+    const result = await api('ping');
+    if (!result.ok) {
+      errEl.textContent = 'Incorrect PIN. Please try again.';
+      API_URL = ''; SESSION_PIN = '';
+      return;
+    }
+    localStorage.setItem('cvc_api_url', url);
+    sessionStorage.setItem('cvc_pin', pin);
+    unlockUI();
+    await loadCaseList();
+  } catch(e) {
+    errEl.textContent = 'Cannot reach the server.\n\n' +
+      'Check:\n1. The URL is correct (ends with /exec)\n' +
+      '2. Deployment is set to "Anyone" under Who has access\n' +
+      '3. You clicked "Deploy" after making changes';
+    API_URL = ''; SESSION_PIN = '';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Access Study Data →';
+  }
+}
+
+function unlockUI() {
+  document.getElementById('tab-logout').style.display = '';
+  showPanel('cases');
+}
+
+function doLogout() {
+  sessionStorage.removeItem('cvc_pin');
+  SESSION_PIN = ''; API_URL = '';
+  document.getElementById('pinInput').value = '';
+  document.getElementById('pinError').textContent = '';
+  document.getElementById('tab-logout').style.display = 'none';
+  document.getElementById('tab-form').style.display = 'none';
+  showPanel('pin');
+}
+
+// ══════════════════════════════════════════════════
+// CASES LIST
+// ══════════════════════════════════════════════════
+async function loadCaseList() {
+  document.getElementById('casesList').innerHTML = '<div class="loading-state">↻ Loading from Google Sheets…</div>';
+  try {
+    const result = await api('listCases');
+    if (!result.ok) throw new Error(result.error);
+    allCases = result.cases || [];
+    renderCaseList(allCases);
+  } catch(e) {
+    document.getElementById('casesList').innerHTML =
+      `<div class="empty-state"><div class="icon">⚠️</div><p>Could not load cases.<br><small style="font-family:monospace">${e.message}</small></p></div>`;
+  }
+}
+
+function filterCases() {
+  const q = (document.getElementById('caseSearch').value || '').toLowerCase();
+  const filtered = !q ? allCases : allCases.filter(c =>
+    [(c.participant_id||''),(c.name_initials||''),(c.ward_unit||'')].some(v => v.toLowerCase().includes(q))
+  );
+  renderCaseList(filtered);
+}
+
+function renderCaseList(cases) {
+  const list = document.getElementById('casesList');
+  if (!cases.length) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>${!allCases.length ? 'No cases yet.<br>Click <strong>+ New Case</strong> to begin.' : 'No cases match your search.'}</p></div>`;
+    return;
+  }
+  list.innerHTML = cases.map(c => {
+    const pid  = c.participant_id || '(No ID)';
+    const name = c.name_initials || '—';
+    const ward = c.ward_unit || '—';
+    const date = c.enrollment_date || '—';
+    const mod  = c.last_modified ? new Date(c.last_modified).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    const statusChip = c.status === 'submitted'
+      ? `<span class="chip submitted">✓ Submitted</span>`
+      : `<span class="chip draft">Draft</span>`;
+    const incompleteChip = (!c.complete && c.status !== 'submitted')
+      ? `<span class="chip incomplete">⚠ Needs follow-up</span>` : '';
+    const delBtn = c.status === 'draft'
+      ? `<button class="btn-del" onclick="deleteCase(event,'${pid}')" title="Delete draft">×</button>`
+      : '<span style="width:24px;display:inline-block"></span>';
+    return `<div class="case-card" onclick="openCase('${pid}')">
+      <div class="case-id">${pid}</div>
+      <div class="case-meta"><strong>${name}</strong> · ${ward} · ${date}</div>
+      <div class="case-flags">${statusChip}${incompleteChip}</div>
+      <div class="case-date">${mod}</div>
+      ${delBtn}
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════
+// OPEN / NEW
+// ══════════════════════════════════════════════════
+function newCase() {
+  currentCaseId = null;
+  clearForm();
+  const today = new Date().toISOString().split('T')[0];
+  setField('enrollment_date', today);
+  setField('form_completed_date', today);
+  setBanner('New Case', 'Not yet saved to Sheets');
+  document.getElementById('tab-form').style.display = '';
+  showPanel('form');
+}
+
+async function openCase(pid) {
+  setBanner(pid, 'Loading…');
+  document.getElementById('tab-form').style.display = '';
+  showPanel('form');
+  clearForm();
+  try {
+    const result = await api('loadCase', { participant_id: pid });
+    if (!result.ok) throw new Error(result.error);
+    currentCaseId = pid;
+    populateForm(result.data || {});
+    const mod = result.data?.last_modified ? 'Last saved ' + new Date(result.data.last_modified).toLocaleString() : '';
+    setBanner(pid, (result.status === 'submitted' ? '✓ Submitted · ' : '') + mod);
+    updateProgress();
+  } catch(e) {
+    showToast('Could not load case: ' + e.message, 'error');
+  }
+}
+
+async function deleteCase(e, pid) {
+  e.stopPropagation();
+  if (!confirm(`Delete draft "${pid}"? This cannot be undone.`)) return;
+  try {
+    const result = await api('deleteDraft', { participant_id: pid });
+    if (!result.ok) throw new Error(result.error);
+    allCases = allCases.filter(c => c.participant_id !== pid);
+    renderCaseList(allCases);
+    showToast('Draft deleted.', 'info');
+  } catch(e) {
+    showToast('Delete failed: ' + e.message, 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════
+// FORM DATA
+// ══════════════════════════════════════════════════
+function setField(name, val) {
+  const el = document.querySelector(`[name="${name}"]`);
+  if (el) el.value = val;
+}
+
+function getFormData() {
+  const form = document.getElementById('studyForm');
+  const data = {};
+  form.querySelectorAll('input[type=text],input[type=number],input[type=date],input[type=datetime-local],textarea')
+    .forEach(el => { if (el.name) data[el.name] = el.value; });
+  form.querySelectorAll('input[type=radio]:checked').forEach(el => { data[el.name] = el.value; });
+  form.querySelectorAll('input[type=checkbox]').forEach(el => { if (el.name) data[el.name] = el.checked ? el.value : ''; });
+  const inds = ['ind_hemodynamic','ind_drug','ind_dialysis','ind_tpn','ind_other'].filter(n => data[n]).map(n => data[n]);
+  if (data.ind_other_text) inds.push('('+data.ind_other_text+')');
+  data.cvc_indications_combined = inds.join('; ');
+  return data;
+}
+
+function populateForm(data) {
+  const form = document.getElementById('studyForm');
+  Object.entries(data).forEach(([name, value]) => {
+    if (value === '' || value === null || value === undefined) return;
+    form.querySelectorAll(`[name="${name}"]`).forEach(el => {
+      if (el.type === 'radio')    { if (el.value === String(value)) el.checked = true; }
+      else if (el.type === 'checkbox') { el.checked = (el.value === String(value)); }
+      else { el.value = value; }
+    });
+  });
+  syncConditionals();
+}
+
+function clearForm() {
+  document.getElementById('studyForm').reset();
+  document.querySelectorAll('.conditional').forEach(el => el.classList.remove('visible'));
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('statusMsg').textContent = '';
+}
+
+// ══════════════════════════════════════════════════
+// SAVE DRAFT
+// ══════════════════════════════════════════════════
+async function saveDraft() {
+  const data = getFormData();
+  if (!data.participant_id) { showToast('Enter a Participant ID first.', 'warn'); return; }
+  setBusy(true);
+  try {
+    const result = await api('saveDraft', { data });
+    if (!result.ok) throw new Error(result.error);
+    currentCaseId = data.participant_id;
+    setBanner(data.participant_id, 'Saved at ' + new Date().toLocaleTimeString());
+    showToast('Draft saved to Google Sheets.', 'info');
+    const entry = { participant_id: data.participant_id, name_initials: data.name_initials, ward_unit: data.ward_unit, enrollment_date: data.enrollment_date, last_modified: new Date().toISOString(), status: 'draft', complete: false, missing_fields: [] };
+    const idx = allCases.findIndex(c => c.participant_id === data.participant_id);
+    if (idx >= 0) allCases[idx] = entry; else allCases.unshift(entry);
+  } catch(e) {
+    showToast('Save failed: ' + e.message, 'error');
+  } finally {
+    setBusy(false);
+  }
+}
+
+setInterval(() => {
+  if (document.getElementById('panel-form').classList.contains('active') && currentCaseId) saveDraft();
+}, 90000);
+
+// ══════════════════════════════════════════════════
+// FINAL SUBMIT
+// ══════════════════════════════════════════════════
+document.getElementById('studyForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const missing = [];
+  const radioGroups = {};
+  document.querySelectorAll('[required]').forEach(el => {
+    if (el.type === 'radio') radioGroups[el.name] = radioGroups[el.name] || document.querySelector(`input[name="${el.name}"]:checked`);
+    else if (!el.value.trim()) missing.push(el.placeholder || el.name);
+  });
+  Object.entries(radioGroups).forEach(([n, checked]) => { if (!checked) missing.push(n); });
+  if (missing.length) { showToast(`Fill required fields: ${missing.slice(0,3).join(', ')}${missing.length>3?'…':''}`, 'error'); return; }
+  if (!confirm('Mark this case as final and submit to Google Sheets?')) return;
+
+  const data = getFormData();
+  if (!data.participant_id) { showToast('Enter a Participant ID first.', 'warn'); return; }
+
+  setBusy(true);
+  document.getElementById('statusMsg').textContent = 'Submitting…';
+  try {
+    const result = await api('submitFinal', { data });
+    if (!result.ok) throw new Error(result.error);
+    currentCaseId = data.participant_id;
+    setBanner(data.participant_id, '✓ Submitted at ' + new Date().toLocaleTimeString());
+    showToast('✓ Case submitted successfully!', 'success');
+    document.getElementById('statusMsg').textContent = 'Submitted at ' + new Date().toLocaleTimeString();
+    const entry = { participant_id: data.participant_id, name_initials: data.name_initials, ward_unit: data.ward_unit, enrollment_date: data.enrollment_date, last_modified: new Date().toISOString(), status: 'submitted', complete: true, missing_fields: [] };
+    const idx = allCases.findIndex(c => c.participant_id === data.participant_id);
+    if (idx >= 0) allCases[idx] = entry; else allCases.unshift(entry);
+  } catch(e) {
+    showToast('Submission failed: ' + e.message, 'error');
+    document.getElementById('statusMsg').textContent = 'Error: ' + e.message;
+  } finally {
+    setBusy(false);
+  }
+});
+
+// ══════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════
+function setBanner(id, saved) {
+  document.getElementById('bannerCaseId').textContent = id;
+  document.getElementById('bannerSavedTime').textContent = saved;
+}
+function setBusy(b) {
+  document.getElementById('submitBtn').disabled = b;
+  document.getElementById('draftBtn').disabled = b;
+  document.getElementById('btnSaveBanner').disabled = b;
+  document.getElementById('submitBtn').textContent = b ? 'Working…' : '✓ Mark as Final & Submit';
+}
+function toggleSection(id) { document.getElementById(id).classList.toggle('collapsed'); }
+function syncConditionals() {
+  const cb = document.getElementById('cvc_ind_other_cb');
+  document.getElementById('cvc_ind_other_field').classList.toggle('visible', !!(cb && cb.checked));
+  document.getElementById('pgy_field').classList.toggle('visible', !!document.querySelector('input[name="operator_level"][value="Resident"]:checked'));
+  document.getElementById('cxr_mal_field').classList.toggle('visible', !!document.querySelector('input[name="cxr_tip_position"][value="Malposition"]:checked'));
+}
+document.getElementById('cvc_ind_other_cb').addEventListener('change', syncConditionals);
+document.querySelectorAll('input[name="operator_level"]').forEach(r => r.addEventListener('change', syncConditionals));
+document.querySelectorAll('input[name="cxr_tip_position"]').forEach(r => r.addEventListener('change', syncConditionals));
+
+function updateProgress() {
+  const reqRadio = new Set();
+  let tTotal = 0, tFilled = 0, rFilled = 0;
+  document.querySelectorAll('[required]').forEach(el => {
+    if (el.type === 'radio') reqRadio.add(el.name);
+    else { tTotal++; if (el.value.trim()) tFilled++; }
+  });
+  reqRadio.forEach(n => { if (document.querySelector(`input[name="${n}"]:checked`)) rFilled++; });
+  const total = tTotal + reqRadio.size;
+  document.getElementById('progressFill').style.width = total ? Math.round(((tFilled+rFilled)/total)*100)+'%' : '0%';
+}
+document.getElementById('studyForm').addEventListener('input', updateProgress);
+document.getElementById('studyForm').addEventListener('change', updateProgress);
+
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.querySelectorAll('.btn-tab').forEach(b => b.classList.remove('active'));
+  const t = document.getElementById('tab-' + name);
+  if (t) t.classList.add('active');
+}
+function goBack() {
+  document.getElementById('tab-form').style.display = 'none';
+  showPanel('cases');
+}
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 4500);
+}
+</script>
+</body>
+</html>
